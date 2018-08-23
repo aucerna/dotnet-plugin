@@ -115,11 +115,45 @@ public class Publish extends DotnetDefaultTask {
                 throw new RuntimeException(t);
             }
 
+            String version = extractMajorVersion(info._version);
+            String expectedBuildMeta = extractBuildMetadata(info._version);
+
             String output = out.toString();
-            return output.contains(info._version);
+            Pattern p = Pattern.compile("(.*) (.*)");
+            Matcher m = p.matcher(output);
+            while (m.find()) {
+                String candidate = extractMajorVersion(m.group(2));
+                if (version.equals(candidate)) {
+                    String actualBuildMeta = extractBuildMetadata(m.group(2));
+                    if (!expectedBuildMeta.equals(actualBuildMeta)) {
+                        LOGGER.warn("Build metadata does not match expected {} but found {}.", expectedBuildMeta, actualBuildMeta);
+                    }
+
+                    return true;
+                }
+            }
+            return false;
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    private String extractMajorVersion(String version) {
+        Pattern p = Pattern.compile("^(.*)\\+(g[a-f0-9]{7})$");
+        Matcher m = p.matcher(version);
+        if (m.find()) {
+            return m.group(1);
+        }
+        return version;
+    }
+
+    private String extractBuildMetadata(String version) {
+        Pattern p = Pattern.compile("^(.*)\\+(g[a-f0-9]{7})$");
+        Matcher m = p.matcher(version);
+        if (m.find()) {
+            return m.group(2);
+        }
+        return version;
     }
 
     private void doPush(File file) {
