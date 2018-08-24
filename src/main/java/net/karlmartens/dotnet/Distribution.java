@@ -3,7 +3,6 @@ package net.karlmartens.dotnet;
 import org.apache.tools.ant.DirectoryScanner;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.kamranzafar.jtar.TarEntry;
@@ -89,25 +88,25 @@ public class Distribution extends DotnetDefaultTask  {
             publish(ext.getRuntime());
         }
 
-        Path root = getProject().getRootDir().toPath();
+        Path projectDir = getProject().getProjectDir().toPath();
 
         DirectoryScanner scanner = new DirectoryScanner();
-        scanner.setBasedir(root.toFile());
+        scanner.setBasedir(projectDir.toFile());
         scanner.setIncludes(_includes);
         scanner.setExcludes(_excludes);
         scanner.setFollowSymlinks(_followSymlinks);
         scanner.scan();
 
         for (String file : scanner.getIncludedDirectories()) {
-            archive(getOutputDir().toPath(), new File(file));
+            archive(projectDir.resolve(file).toFile());
         }
     }
 
-    private void archive(Path baseDir, File file) throws IOException {
+    private void archive(File file) throws IOException {
         LOGGER.quiet("Bundling {}.", file.toString());
         Path source = file.toPath();
 
-        Path target = generateArchiveTarget(baseDir, source);
+        Path target = generateArchiveTarget(source);
         LOGGER.quiet("Archive {}.", target.toString());
 
         DirectoryScanner scanner = new DirectoryScanner();
@@ -137,7 +136,7 @@ public class Distribution extends DotnetDefaultTask  {
         }
     }
 
-    private Path generateArchiveTarget(Path baseDir, Path source) {
+    private Path generateArchiveTarget(Path source) {
         StringBuilder filename = new StringBuilder();
         if (_basename != null)
             filename.append(_basename);
@@ -156,6 +155,7 @@ public class Distribution extends DotnetDefaultTask  {
 
         filename.append(".tar.gz");
 
+        Path baseDir = getOutputDir().toPath();
         return baseDir.resolve(filename.toString());
     }
 
