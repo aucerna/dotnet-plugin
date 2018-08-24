@@ -25,8 +25,10 @@ public class Clean extends DotnetDefaultTask {
             execSpec.setArgs(args);
         });
 
-        cleanTestResults(ext.getSolution());
         cleanPackages();
+
+        getProject().delete(getProject().getProjectDir().toPath().resolve("TestResults"));
+        getProject().delete(getProject().getBuildDir());
     }
 
     private void cleanPackages() {
@@ -35,13 +37,6 @@ public class Clean extends DotnetDefaultTask {
         File projectDir = getProject().getProjectDir();
         getProject().fileTree(projectDir.toString(), t -> {
             t.include(ext.getPackagePattern());
-        }).forEach(File::delete);
-    }
-
-    private void cleanTestResults(String solution) {
-        String baseDir = directoryName(solution);
-        getProject().fileTree(baseDir, t -> {
-            t.include("TestResults/**/*.trx");
         }).forEach(File::delete);
     }
 }

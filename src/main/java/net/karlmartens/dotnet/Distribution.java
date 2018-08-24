@@ -3,6 +3,7 @@ package net.karlmartens.dotnet;
 import org.apache.tools.ant.DirectoryScanner;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.kamranzafar.jtar.TarEntry;
@@ -73,7 +74,7 @@ public class Distribution extends DotnetDefaultTask  {
     }
 
     @OutputDirectory
-    public File getOutputDir() throws IOException {
+    public File getOutputDir() {
         return getProject().getBuildDir().toPath().resolve("dist").toFile();
     }
 

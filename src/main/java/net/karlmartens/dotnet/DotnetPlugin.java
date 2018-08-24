@@ -36,7 +36,7 @@ public class DotnetPlugin implements Plugin<Project> {
         });
         tasks.create(COMPILE_TASK, Compile.class, task -> {
             task.setExtension(extension);
-            task.setDependsOn(Arrays.asList(CLEAN_TASK, RESTORE_TASK));
+            task.setDependsOn(Arrays.asList(RESTORE_TASK));
         });
         tasks.create(TEST_TASK, Test.class, task -> {
             task.setExtension(extension);
