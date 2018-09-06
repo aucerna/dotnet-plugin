@@ -13,7 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Pack extends DotnetDefaultTask {
-    private static Logger LOGGER = Logging.getLogger(Publish.class);
+    private static Logger LOGGER = Logging.getLogger(Pack.class);
 
     private boolean _includeSymbols = false;
     private boolean _includeSource = false;
