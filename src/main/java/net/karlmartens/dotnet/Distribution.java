@@ -13,6 +13,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class Distribution extends DotnetDefaultTask  {
     private static Logger LOGGER = Logging.getLogger(Distribution.class);
@@ -118,20 +120,42 @@ public class Distribution extends DotnetDefaultTask  {
         File targetFile = target.toFile();
         targetFile.createNewFile();
 
-        try (TarOutputStream out = new TarOutputStream(new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(targetFile, false))))) {
-            for (String includedFile : scanner.getIncludedFiles()) {
-                LOGGER.debug("Adding file {}", includedFile);
-                File f = source.resolve(includedFile).toFile();
+        switch(getExtension().getDistributeAs()) {
+            case(".zip"): //.zip
+                try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(targetFile, false))) {
+                    for (String includedFile : scanner.getIncludedFiles()) {
+                        LOGGER.debug("Adding file {}", includedFile);
+                        File f = source.resolve(includedFile).toFile();
 
-                out.putNextEntry(new TarEntry(f, includedFile));
+                        out.putNextEntry(new ZipEntry(f.getName()));
 
-                try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(f))) {
-                    int count;
-                    byte data[] = new byte[2048];
-                    while ((count = in.read(data)) != -1) {
-                        out.write(data, 0, count);
+                        addFileToOutputStream(out, f);
+
+                        out.closeEntry();
                     }
                 }
+                break;
+            default:
+                try (TarOutputStream out = new TarOutputStream(new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(targetFile, false))))) {
+                    for (String includedFile : scanner.getIncludedFiles()) {
+                        LOGGER.debug("Adding file {}", includedFile);
+                        File f = source.resolve(includedFile).toFile();
+
+                        out.putNextEntry(new TarEntry(f, includedFile));
+
+                        addFileToOutputStream(out, f);
+                    }
+                }
+                break;
+        }
+    }
+
+    private void addFileToOutputStream(OutputStream out, File f) throws IOException {
+        try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(f))) {
+            int count;
+            byte data[] = new byte[2048];
+            while ((count = in.read(data)) != -1) {
+                out.write(data, 0, count);
             }
         }
     }
@@ -153,7 +177,7 @@ public class Distribution extends DotnetDefaultTask  {
             filename.append(_version);
         }
 
-        filename.append(".tar.gz");
+        filename.append(getExtension().getDistributeAs());
 
         Path baseDir = getOutputDir().toPath();
         return baseDir.resolve(filename.toString());

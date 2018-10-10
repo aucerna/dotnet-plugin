@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 public class DotnetExtension {
 
     private String _configuration = null;
+    private String _distributeAs = ".tar.gz"; // Options: .tar.gz, .zip
     private String _dotnetHome = null;
     private String _solution = "";
     private String _projectPattern = "**/*.csproj";
@@ -25,6 +26,14 @@ public class DotnetExtension {
 
     public void setConfiguration(String configuration) {
         _configuration = configuration;
+    }
+
+    public String getDistributeAs() {
+        return _distributeAs;
+    }
+
+    public void setDistributeAs(String distributeAs) {
+        _distributeAs = distributeAs;
     }
 
     public String getFramework() {
