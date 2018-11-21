@@ -44,6 +44,9 @@ public class Publish extends DotnetDefaultTask {
 
     @TaskAction
     void exec() {
+        if ("".equals(_repository))
+            return;
+
         DotnetExtension ext = getExtension();
         File projectDir = getProject().getProjectDir();
         getProject().fileTree(projectDir.toString(), t -> {
