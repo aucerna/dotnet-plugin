@@ -1,18 +1,25 @@
 package net.karlmartens.dotnet;
 
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.ArchiveException;
+import org.apache.commons.compress.archivers.ArchiveOutputStream;
+import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorOutputStream;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.tools.ant.DirectoryScanner;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
-import org.kamranzafar.jtar.TarEntry;
-import org.kamranzafar.jtar.TarOutputStream;
 
 import java.io.*;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.GZIPOutputStream;
 
 public class Distribution extends DotnetDefaultTask  {
     private static Logger LOGGER = Logging.getLogger(Distribution.class);
@@ -102,7 +109,7 @@ public class Distribution extends DotnetDefaultTask  {
         }
     }
 
-    private void archive(File file) throws IOException {
+    private void archive(File file) throws IOException, ArchiveException, CompressorException {
         LOGGER.quiet("Bundling {}.", file.toString());
         Path source = file.toPath();
 
@@ -118,21 +125,34 @@ public class Distribution extends DotnetDefaultTask  {
         File targetFile = target.toFile();
         targetFile.createNewFile();
 
-        try (TarOutputStream out = new TarOutputStream(new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(targetFile, false))))) {
+        try (ArchiveOutputStream out = new ArchiveStreamFactory().createArchiveOutputStream(getExtension().getArchiveAs(), new FileOutputStream(targetFile, false))) {
             for (String includedFile : scanner.getIncludedFiles()) {
                 LOGGER.debug("Adding file {}", includedFile);
                 File f = source.resolve(includedFile).toFile();
+                out.putArchiveEntry(buildArchiveEntry(f));
+                IOUtils.copy(new FileInputStream(file), out);
+                out.closeArchiveEntry();
+            }
+        }
 
-                out.putNextEntry(new TarEntry(f, includedFile));
-
-                try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(f))) {
-                    int count;
-                    byte data[] = new byte[2048];
-                    while ((count = in.read(data)) != -1) {
-                        out.write(data, 0, count);
-                    }
+        if(getExtension().getCompressAs() != null && !getExtension().getCompressAs().isEmpty()) {
+            final String compressedTarget = targetFile.getAbsolutePath() + "." + getExtension().getCompressAs();
+            LOGGER.quiet("Compress {}.", compressedTarget);
+            try (FileOutputStream out = new FileOutputStream(compressedTarget, false)) {
+                CompressorStreamFactory factory = new CompressorStreamFactory();
+                try (CompressorOutputStream compressorStream = factory.createCompressorOutputStream(getExtension().getCompressAs(), out)) {
+                    IOUtils.copy(new FileInputStream(targetFile), compressorStream);
                 }
             }
+        }
+    }
+
+    private ArchiveEntry buildArchiveEntry(File f) {
+        switch(getExtension().getArchiveAs()) {
+            case(ArchiveStreamFactory.ZIP):
+                return new ZipArchiveEntry(f.getName());
+            default:
+                return new TarArchiveEntry(f);
         }
     }
 
@@ -153,7 +173,7 @@ public class Distribution extends DotnetDefaultTask  {
             filename.append(_version);
         }
 
-        filename.append(".tar.gz");
+        filename.append("." + getExtension().getArchiveAs());
 
         Path baseDir = getOutputDir().toPath();
         return baseDir.resolve(filename.toString());
