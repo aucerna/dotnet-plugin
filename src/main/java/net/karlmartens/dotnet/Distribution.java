@@ -190,7 +190,6 @@ public class Distribution extends DotnetDefaultTask  {
             whenHasValue(ext.getConfiguration(), addNamedParameter(args, "--configuration"));
             whenHasValue(ext.getFramework(), addNamedParameter(args, "--framework"));
             whenHasValue(runtime, addNamedParameter(args, "--runtime"));
-            args.add("--no-restore");
             appendParameters(args);
 
             execSpec.setArgs(args);
