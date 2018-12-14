@@ -1,12 +1,16 @@
 package net.karlmartens.dotnet;
 
+import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.gradle.internal.impldep.org.apache.commons.compress.compressors.CompressorStreamFactory;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class DotnetExtension {
 
     private String _configuration = null;
-    private String _distributeAs = ".tar.gz"; // Options: .tar.gz, .zip
+    private String _archiveAs = ArchiveStreamFactory.TAR;
+    private String _compressAs = CompressorStreamFactory.GZIP;
     private String _dotnetHome = null;
     private String _solution = "";
     private String _projectPattern = "**/*.csproj";
@@ -28,12 +32,20 @@ public class DotnetExtension {
         _configuration = configuration;
     }
 
-    public String getDistributeAs() {
-        return _distributeAs;
+    public String getArchiveAs() {
+        return _archiveAs;
     }
 
-    public void setDistributeAs(String distributeAs) {
-        _distributeAs = distributeAs;
+    public void setArchiveAs(String archiveAs) {
+        _archiveAs = archiveAs;
+    }
+
+    public String getCompressAs() {
+        return _compressAs;
+    }
+
+    public void setCompressAs(String compressAs) {
+        _compressAs = compressAs;
     }
 
     public String getFramework() {
